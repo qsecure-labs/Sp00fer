@@ -1,0 +1,8 @@
+colorama
+emailprotectionslib
+dnslib
+tldextract
+argparse
+prettytable
+future
+scapy
