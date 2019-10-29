@@ -110,6 +110,11 @@ if os.name == 'posix':
 
 args = parser.parse_args()
 
+# Check if the Results folder already exists. If not, create it
+path = os.getcwd()
+if os.path.exists(path+"/Results") == False:
+	os.mkdir(path+"/Results")
+
 # file with the results
 results_name = args.domain + ".txt"
 file = open("Results/" + results_name, "a")
