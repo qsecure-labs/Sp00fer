@@ -32,6 +32,7 @@ A JSON file is used as a template for each scenario you want to sent. The reserv
 - **CLIENTDOMAIN** which is replaced by the value of the `--domain` argument
 - **CLIENTNAME** which is derived by the value of the `--email` argument's local part (e.g. info@client.com will become "info")
 - **TESTERDOMAIN** which is replaced by the value of the `--tester` argument
+- **SERVERIP** which is replaced by the value of the `--server` argument
 
 Example of the JSON is:
 
