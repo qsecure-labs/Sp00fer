@@ -43,7 +43,8 @@ Example of the JSON is:
     "headerfrom": "CLIENTEMAIL",
     "to": "CLIENTEMAIL",
     "subject": "Test number 1",
-    "body": "This is a test e-mail message.\n\nPlease forward it to Pentester@[yourdomain] \n\nThank you,\nTest"
+    "body": "This is a test e-mail message.\n\nPlease forward it to Pentester@[yourdomain] \n\nThank you,\nTest",
+    "server": "SERVERIP"
 },
 {
     "scenario_no": "2",
@@ -52,7 +53,8 @@ Example of the JSON is:
     "headerfrom": "TESTERDOMAIN",
     "to": "TESTERDOMAIN",
     "subject": "Test number 2",
-    "body": "This is a test e-mail message.\n\nPlease forward it to Pentester@[yourdomain] \n\nThank you,\nTest"
+    "body": "This is a test e-mail message.\n\nPlease forward it to Pentester@[yourdomain] \n\nThank you,\nTest",
+    "server": "SERVERIP"
 }]
 ```
 
