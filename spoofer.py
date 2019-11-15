@@ -173,7 +173,7 @@ if (args.email is not None):
 if os.name == 'posix':
     if (args.pcap is not None):
         tcpd = subprocess.Popen(
-            ['tcpdump', '-n', 'port ' + args.port, '-w', 'Results/capture.cap'])
+            ['tcpdump', '-n', 'port ' + str(args.port), '-w', 'Results/capture.cap'])
 
 # Make all the necessary replacements in the JSON file depending on the
 # arguments given by the user
