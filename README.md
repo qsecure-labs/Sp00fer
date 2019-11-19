@@ -8,7 +8,7 @@ Sp00fer is a tool for mail server testing (e.g. for open mail relays etc.) and f
 
 ### Linux:
 
-`git clone https://gitlab.cdma.com.cy/v4kkis/sp00fer.git`
+`git clone https://github.com/qsecure-labs/Sp00fer.git`
 
 `chmod +x install.sh`
 
@@ -18,7 +18,7 @@ Sp00fer is a tool for mail server testing (e.g. for open mail relays etc.) and f
 
 ### Windows (For windows the pcap argument which saves the traffic is not implemented):
 
-`git clone https://gitlab.cdma.com.cy/v4kkis/sp00fer.git`
+`git clone https://github.com/qsecure-labs/Sp00fer.git`
 
 `pip3 install -r requirements.txt`
 
