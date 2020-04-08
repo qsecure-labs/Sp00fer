@@ -152,11 +152,11 @@ if (args.domain is not None):
         file.write("\nDMARC Record: ")
         if os.name == 'nt':
             print("DMARC Record: ")
-            print(dmarc_record.policy + "\n")
+            print(dmarc_record.record + "\n")
         else:
             prGreen("DMARC Record: ")
-            prCyan(dmarc_record.policy + "\n")
-        file.write(dmarc_record.policy + "\n")
+            prCyan(dmarc_record.record + "\n")
+        file.write(dmarc_record.record + "\n")
     except:
         if os.name == 'nt':
             print("No DMARC record found\n")
