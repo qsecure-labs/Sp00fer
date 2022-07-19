@@ -11,32 +11,40 @@ from smtplib import SMTPResponseException
 import smtplib
 from scapy.all import *
 import os
+import random
+import string
+
+
+#
+# Current Verion: 1.3 
+# Date Modified: 29/06/2022 
+# Changes Performed: 	Added the Message-ID header in the email MIME headers.
+#						The capture file gets delete if it already exists.
+#
+#
+# Current Verion: 1.2 
+# Date Modified: 31/05/2022 
+# Changes Performed: 	Changed ehlo to helo because smtplib.sendmail() appended the massage size to the mail from: address 
+#							If ehlo was used (ESMTP), it caused DMARC and SPF problems, especially with Sophos antispam.
+#						Added the MailFrom and HeaderFrom fields in the results report.
+#
+#
+# Current Verion: 1.1 
+# Date Modified: 19/05/2022 
+# Changes Performed: 	Reply-To and Return-Path headers were not included in the emails sent. Fixed it
+# 			CLIENTEMAIL and CLIENTNAME were not replaced if found in replyTo or returnPath variables. Fixed it.
+#
 
 # colours declarations
-
-
 def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
-
-
 def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
-
-
 def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
-
-
 def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
-
-
 def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
-
-
 def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
-
-
 def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
-
-
 def prBlack(skk): print("\033[98m {}\033[00m" .format(skk))
+
 
 
 lightblue = "\033[1;36m"
@@ -102,7 +110,7 @@ optionalargs.add_argument('-p', '--port', action='store', default=25,
                           help='Mail server port to be used (default 25)')
 optionalargs.add_argument('-l', '--delay', action='store', default=5,
                           help='Delay between emails - defaults to 5 seconds')
-optionalargs.add_argument('-y', '--ehlo', action='store', default=5,
+optionalargs.add_argument('-y', '--helo', action='store', default=5,
                           help='Domain to be used in the EHLO/HELO command')
 if os.name == 'posix':
     optionalargs.add_argument('-c', '--pcap', action='store',
@@ -112,12 +120,18 @@ args = parser.parse_args()
 
 # Check if the Results folder already exists. If not, create it
 path = os.getcwd()
-if os.path.exists(path+"/Results") == False:
-	os.mkdir(path+"/Results")
+if os.path.exists(path + "/Results") == False:
+    os.mkdir(path + "/Results")
 
-# file with the results
+# Create file to store the results
 results_name = args.domain + ".txt"
 file = open("Results/" + results_name, "a")
+
+# Delete pcap file if it exists 
+file_path = path + "/Results/capture.cap"
+if os.path.exists(file_path) == True:
+    os.remove(file_path)
+
 
 # Fill the domain table
 x = PrettyTable()
@@ -188,12 +202,28 @@ if (args.json is not None):
             data[i]['headerfrom'] = data[i]['headerfrom'].replace(
                 'CLIENTEMAIL', args.email)
             data[i]['to'] = data[i]['to'].replace('CLIENTEMAIL', args.email)
+            try:
+                data[i]['returnPath'] = data[i]['returnPath'].replace(
+                    'CLIENTEMAIL', args.email)
+                data[i]['replyTo'] = data[i]['replyTo'].replace(
+                    'CLIENTEMAIL', args.email)
+            except:
+                pass
+
 
             data[i]['mailfrom'] = data[i]['mailfrom'].replace(
                 'CLIENTNAME', clientname)
             data[i]['headerfrom'] = data[i]['headerfrom'].replace(
                 'CLIENTNAME', clientname)
             data[i]['to'] = data[i]['to'].replace('CLIENTNAME', clientname)
+            try:
+                data[i]['returnPath'] = data[i]['returnPath'].replace(
+                    'CLIENTNAME', clientname)
+                data[i]['replyTo'] = data[i]['replyTo'].replace(
+                    'CLIENTNAME', clientname)
+            except:
+                pass
+
 
         if(args.tester is not None):
             data[i]['mailfrom'] = data[i]['mailfrom'].replace(
@@ -232,12 +262,54 @@ if (args.json is not None):
 
 # Generating the emails based on the JSON templates
     for i in list(range(len(data_new))):
-        message = f"""From: {data_new[i]["headerfrom"]}
+        if("@" in data_new[i]["mailfrom"]):
+            at_index = data_new[i]["mailfrom"].index("@")
+            fromdomain = data_new[i]["mailfrom"][at_index:]
+            messageID = '<' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for k in range(48)) + fromdomain + '>'
+        elif("@" in data_new[i]["headerfrom"]):
+            at_index = data_new[i]["headerfrom"].index("@")
+            fromdomain = data_new[i]["headerfrom"][at_index:]
+            messageID = '<' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for k in range(48)) + fromdomain + '>'
+        else:
+            messageID = '<' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for k in range(48)) + '@' + ''.join(random.choice(string.ascii_lowercase) for l in range(10)) + '.com' + '>'
+    
+        if("replyTo" in data_new[i] and "returnPath" not in data_new[i]):
+            message = f"""From: {data_new[i]["headerfrom"]}
 To: {data_new[i]["to"]}
+Reply-To: {data_new[i]["replyTo"]}
 Subject: {data_new[i]["subject"]}
+Message-ID: {messageID}
 
 {data_new[i]["body"]}
 """
+        elif("replyTo" not in data_new[i] and "returnPath" in data_new[i]):
+            message = f"""From: {data_new[i]["headerfrom"]}
+To: {data_new[i]["to"]}
+Return-Path: {data_new[i]["returnPath"]}
+Subject: {data_new[i]["subject"]}
+Message-ID: {messageID}
+
+{data_new[i]["body"]}
+"""
+        elif("replyTo" in data_new[i] and "returnPath" in data_new[i]):
+            message = f"""From: {data_new[i]["headerfrom"]}
+To: {data_new[i]["to"]}
+Reply-To: {data_new[i]["replyTo"]}
+Return-Path: {data_new[i]["returnPath"]}
+Subject: {data_new[i]["subject"]}
+Message-ID: {messageID}
+
+{data_new[i]["body"]}
+"""
+        elif("replyTo" not in data_new[i] and "returnPath" not in data_new[i]):
+            message = f"""From: {data_new[i]["headerfrom"]}
+To: {data_new[i]["to"]}
+Subject: {data_new[i]["subject"]}
+Message-ID: {messageID}
+
+{data_new[i]["body"]}
+"""
+
         if os.name == 'nt':
             print("\nLIVE results - Scenario " + data_new[i]["scenario_no"])
         else:
@@ -246,18 +318,17 @@ Subject: {data_new[i]["subject"]}
         try:
             # Attempt to send the emails; if there is an SMTP error it will throw an exception
             smtpObj = smtplib.SMTP(data_new[i]["server"], args.port)
-            if args.ehlo is not None:
-                smtpObj.ehlo(args.ehlo)
+            if args.helo is not None:
+                smtpObj.helo(args.helo)
             smtpObj.sendmail(data_new[i]["mailfrom"],
                              data_new[i]["to"], message)
             if os.name == 'nt':
                 print("Email successfully sent")
             else:
                 prCyan("Email successfully sent")
-            x1.field_names = ["No",
-                              "Result", "From", "To", "Description"]
+            x1.field_names = ["No", "Result", "MailFrom", "HeaderFrom", "To", "Description"]
             x1.add_row([data_new[i]["scenario_no"],
-                        "Sent", data_new[i]["headerfrom"], data_new[i]["to"], data_new[i]["comment"]])
+                        "Sent", data_new[i]["mailfrom"], data_new[i]["headerfrom"], data_new[i]["to"], data_new[i]["comment"]])
             x1.align["Description"] = "l"
             print(x1)
 
@@ -268,9 +339,9 @@ Subject: {data_new[i]["subject"]}
             else:
                 print (red + "SMTP Error: ")
                 prRed(e)
-            x1.field_names = ["No", "Result", "From", "To", "Description"]
+            x1.field_names = ["No", "Result", "MailFrom", "HeaderFrom", "To", "Description"]
             x1.add_row([data_new[i]["scenario_no"],
-                        "Not sent", data_new[i]["headerfrom"], data_new[i]["to"], data_new[i]["comment"]])
+                        "Not sent", data_new[i]["mailfrom"], data_new[i]["headerfrom"], data_new[i]["to"], data_new[i]["comment"]])
             x1.align["Description"] = "l"
             print(x1)
         time.sleep(int(args.delay))
